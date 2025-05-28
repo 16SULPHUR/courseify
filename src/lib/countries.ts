@@ -10,7 +10,7 @@ export interface Country {
 }
 
 export const countries: Country[] = [
-  { code: "GLOBAL", name: "Global (Default USD)", currency: "USD" }, // A way to reset to default
+  { code: "IN", name: "Default INR", currency: "INR" }, 
   { code: "US", name: "United States", currency: "USD" },
   { code: "IN", name: "India", currency: "INR" },
   { code: "GB", name: "United Kingdom", currency: "GBP" },
@@ -19,8 +19,6 @@ export const countries: Country[] = [
   { code: "DE", name: "Germany", currency: "EUR" },
   { code: "FR", name: "France", currency: "EUR" },
   { code: "JP", name: "Japan", currency: "JPY" },
-  { code: "KP", name: "North Korea", currency: "KPW" },
-  { code: "IR", name: "Iran", currency: "IRR" }
 ];
 
 // Helper to get country name by code

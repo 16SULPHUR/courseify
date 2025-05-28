@@ -4,6 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { uploadImage as uploadImageService } from "@/lib/imageUpload";
+import Image from 'next/image';
 import {
   Form,
   FormControl,
@@ -18,8 +20,9 @@ import { PackageFormValues, packageSchema } from "@/lib/validations/package";
 import { Course } from "@/lib/api"; // To type the courses prop
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {  Loader2 } from "lucide-react";
+import {  Loader2, UploadCloud, XCircle } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef, useState, ChangeEvent } from "react";
 
 interface PackageFormProps {
   onSubmit: (values: PackageFormValues) => Promise<void>;
@@ -36,18 +39,63 @@ export default function PackageForm({
   isLoading = false,
   submitButtonText = "Save Package",
 }: PackageFormProps) {
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(initialData?.image || undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<PackageFormValues>({
     resolver: zodResolver(packageSchema),
     defaultValues: {
       title: initialData?.title || "",
-      courseIds: initialData?.courseIds || [], // Expecting array of Mongoose _ids
-      image: initialData?.image || "",
+      courseIds: initialData?.courseIds || [],
+      image: initialData?.image || "", // This will hold the URL
     },
   });
 
+  useEffect(() => {
+    form.setValue("image", imageUrl || "");
+  }, [imageUrl, form]);
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    // ... (identical to handleImageUpload in CourseForm)
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsUploadingImage(true);
+    try {
+      const uploadedUrl = await uploadImageService(file);
+      setImageUrl(uploadedUrl);
+      form.setValue("image", uploadedUrl);
+      // toast({ title: "Success", description: "Image uploaded." });
+    } catch (error: any) {
+      // toast({ title: "Image Upload Failed", description: error.message || "Could not upload image.", variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+ const removeImage = () => {
+    setImageUrl(undefined);
+    form.setValue("image", "");
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+         onSubmit={form.handleSubmit((values) => {
+          const finalValues = { ...values, image: imageUrl || "" };
+          return onSubmit(finalValues);
+        })}
+        className="space-y-6"
+      >
         <FormField
           control={form.control}
           name="title"
@@ -115,19 +163,39 @@ export default function PackageForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Package Image URL (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="http://example.com/package-image.jpg" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <FormItem>
+          <FormLabel>Package Image</FormLabel>
+          <FormControl>
+            <div>
+              <Input
+                type="file"
+                accept="image/*" // More generic accept
+                onChange={handleImageUpload}
+                className="hidden"
+                ref={fileInputRef}
+                disabled={isUploadingImage || isLoading}
+              />
+               <Button
+                type="button" variant="outline" onClick={triggerFileInput}
+                disabled={isUploadingImage || isLoading || !!imageUrl}
+                className="w-full mb-2 flex items-center justify-center"
+              >
+                {isUploadingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                {isUploadingImage ? "Uploading..." : (imageUrl ? "Change Image" : "Upload Image")}
+              </Button>
+              {imageUrl && ( /* ... image preview with remove button ... */
+                 <div className="mt-2 p-2 border rounded-md relative aspect-video max-w-xs mx-auto">
+                  <Image src={imageUrl} alt="Uploaded preview" layout="fill" objectFit="contain" />
+                  <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 bg-destructive/80 hover:bg-destructive text-destructive-foreground hover:text-destructive-foreground rounded-full h-6 w-6" onClick={removeImage} disabled={isUploadingImage || isLoading} >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </FormControl>
+          <FormMessage>{form.formState.errors.image?.message}</FormMessage>
+        </FormItem>
+
         <Button type="submit" className="w-full sm:w-auto" disabled={isLoading || availableCourses.length === 0}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {submitButtonText}

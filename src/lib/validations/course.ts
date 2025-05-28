@@ -8,6 +8,7 @@ export const courseSchema = z.object({
     .number({ invalid_type_error: "Price must be a number." })
     .positive({ message: "Price must be a positive number." }),
   image: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  
 });
 
 export type CourseFormValues = z.infer<typeof courseSchema>;
