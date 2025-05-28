@@ -20,7 +20,7 @@ import { PackageFormValues, packageSchema } from "@/lib/validations/package";
 import { Course } from "@/lib/api"; // To type the courses prop
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {  Loader2, UploadCloud, XCircle } from "lucide-react";
+import { Loader2, UploadCloud, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, ChangeEvent } from "react";
 
@@ -39,7 +39,7 @@ export default function PackageForm({
   isLoading = false,
   submitButtonText = "Save Package",
 }: PackageFormProps) {
-    const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | undefined>(initialData?.image || undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,11 +74,11 @@ export default function PackageForm({
     }
   };
 
- const removeImage = () => {
+  const removeImage = () => {
     setImageUrl(undefined);
     form.setValue("image", "");
     if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      fileInputRef.current.value = "";
     }
   };
 
@@ -89,8 +89,8 @@ export default function PackageForm({
 
   return (
     <Form {...form}>
-        <form
-         onSubmit={form.handleSubmit((values) => {
+      <form
+        onSubmit={form.handleSubmit((values) => {
           const finalValues = { ...values, image: imageUrl || "" };
           return onSubmit(finalValues);
         })}
@@ -120,39 +120,54 @@ export default function PackageForm({
                 Choose the courses to include in this package.
               </FormDescription>
               {availableCourses.length === 0 ? (
-                 <p className="text-sm text-muted-foreground p-4 border rounded-md">You don't have any courses to add to a package yet. <Link href="/dashboard/my-courses" className="underline">Create some courses first.</Link></p>
+                <p className="text-sm text-muted-foreground p-4 border rounded-md">You don't have any courses to add to a package yet. <Link href="/dashboard/my-courses" className="underline">Create some courses first.</Link></p>
               ) : (
                 <ScrollArea className="h-48 rounded-md border p-4">
                   <div className="space-y-2">
                     {availableCourses.map((course) => (
                       <FormField
-                        key={course._id} // Use Mongoose _id as key
                         control={form.control}
                         name="courseIds"
-                        render={({ field: courseIdField }) => { // Renamed field to avoid conflict
-                          return (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={courseIdField.value?.includes(course._id)} // Check against Mongoose _id
-                                  onCheckedChange={(checked) => {
-                                    const currentCourseIds = courseIdField.value || [];
-                                    return checked
-                                      ? courseIdField.onChange([...currentCourseIds, course._id])
-                                      : courseIdField.onChange(
-                                          currentCourseIds.filter(
-                                            (value) => value !== course._id
-                                          )
-                                        );
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {course.title} (ID: {course.courseId.substring(0,8)}...)
-                              </FormLabel>
-                            </FormItem>
-                          );
-                        }}
+                        render={({ field }) => ( // 'field' here is for the courseIds array
+                          <FormItem>
+                            <FormLabel>Select Courses</FormLabel>
+                            <FormDescription>
+                              Choose the courses to include in this package.
+                            </FormDescription>
+                            {availableCourses.length === 0 ? (
+                              <p className="text-sm text-muted-foreground p-4 border rounded-md">You don't have any courses to add to a package yet. <Link href="/dashboard/my-courses" className="underline">Create some courses first.</Link></p>
+                            ) : (
+                              <ScrollArea className="h-48 rounded-md border p-4">
+                                <div className="space-y-2">
+                                  {availableCourses.map((course) => (
+                                    // No new FormField here, just the item for layout
+                                    <FormItem key={course._id} className="flex flex-row items-start space-x-3 space-y-0">
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(course._id)}
+                                          onCheckedChange={(checked) => {
+                                            const currentCourseIds = field.value || [];
+                                            return checked
+                                              ? field.onChange([...currentCourseIds, course._id])
+                                              : field.onChange(
+                                                currentCourseIds.filter(
+                                                  (value) => value !== course._id
+                                                )
+                                              );
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal">
+                                        {course.title} (ID: {course.courseId.substring(0, 8)}...)
+                                      </FormLabel>
+                                    </FormItem>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                     ))}
                   </div>
@@ -175,7 +190,7 @@ export default function PackageForm({
                 ref={fileInputRef}
                 disabled={isUploadingImage || isLoading}
               />
-               <Button
+              <Button
                 type="button" variant="outline" onClick={triggerFileInput}
                 disabled={isUploadingImage || isLoading || !!imageUrl}
                 className="w-full mb-2 flex items-center justify-center"
@@ -184,7 +199,7 @@ export default function PackageForm({
                 {isUploadingImage ? "Uploading..." : (imageUrl ? "Change Image" : "Upload Image")}
               </Button>
               {imageUrl && ( /* ... image preview with remove button ... */
-                 <div className="mt-2 p-2 border rounded-md relative aspect-video max-w-xs mx-auto">
+                <div className="mt-2 p-2 border rounded-md relative aspect-video max-w-xs mx-auto">
                   <Image src={imageUrl} alt="Uploaded preview" layout="fill" objectFit="contain" />
                   <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 bg-destructive/80 hover:bg-destructive text-destructive-foreground hover:text-destructive-foreground rounded-full h-6 w-6" onClick={removeImage} disabled={isUploadingImage || isLoading} >
                     <XCircle className="h-4 w-4" />

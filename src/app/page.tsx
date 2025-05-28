@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LayoutDashboard, PackageSearch } from "lucide-react";
 
 export default function HomePage() {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -18,7 +19,13 @@ export default function HomePage() {
         <div>
           <p className="text-xl mb-2">Hello, {user?.name || user?.email}!</p>
           <p className="mb-6">You are logged in. Start managing your courses.</p>
-          {/* Add links to course management pages later */}
+          <Link href="/dashboard/my-courses" className="text-sm font-medium hover:underline underline-offset-4">
+                  <Button variant="default" size="sm">
+                    <LayoutDashboard className="mr-1 h-4 w-4" /> My Courses
+                  </Button>
+                </Link>
+
+                 <Link href="/dashboard/my-packages" passHref><Button variant="default" size="sm"><PackageSearch className="mr-1 h-4 w-4" /> My Packages</Button></Link>
         </div>
       ) : (
         <div>
